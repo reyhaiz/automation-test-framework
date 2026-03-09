@@ -1,101 +1,123 @@
-name: Automation Test Framework
+name: Automation Test Framework CI
 
 on:
+  # ── Manual trigger ──────────────────────────────────────
   workflow_dispatch:
     inputs:
-      test_type:
-        description: "Type of tests to run"
+      test_suite:
+        description: 'Which test suite to run?'
         required: true
-        default: "all"
+        default: 'all'
         type: choice
         options:
           - all
           - api
           - web
 
-  push:
-    branches:
-      - main
-
+  # ── Auto trigger on Pull Request ────────────────────────
   pull_request:
     branches:
       - main
       - develop
 
+# ─────────────────────────────────────────────────────────
 jobs:
 
+  # ── API Tests ───────────────────────────────────────────
   api-tests:
-    name: Run API Tests
+    name: 🔌 API Tests (@api)
     runs-on: ubuntu-latest
-
     if: |
-      github.event_name == 'push' ||
       github.event_name == 'pull_request' ||
       (github.event_name == 'workflow_dispatch' &&
-       (github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'api'))
+       (github.event.inputs.test_suite == 'all' ||
+        github.event.inputs.test_suite == 'api'))
 
     steps:
-      - name: Checkout repository
+      - name: 📥 Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Java 11
+      - name: ☕ Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: 11
-          cache: gradle
+          java-version: '17'
+          distribution: 'temurin'
 
-      - name: Make gradlew executable
+      - name: 📦 Cache Gradle dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: 🔑 Make gradlew executable
         run: chmod +x gradlew
 
-      - name: Run API Tests
-        run: ./gradlew apiTest --no-daemon
+      - name: 🚀 Run API tests
+        run: ./gradlew apiTest --no-daemon --info
 
-      - name: Upload API Test Report
-        if: always()
+      - name: 📊 Upload API test report
         uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: api-test-reports
+          name: api-test-report
           path: build/reports/cucumber/api/
+          retention-days: 7
 
-
+  # ── Web UI Tests ─────────────────────────────────────────
   web-tests:
-    name: Run Web UI Tests
+    name: 🌐 Web UI Tests (@web)
     runs-on: ubuntu-latest
-
     if: |
-      github.event_name == 'push' ||
       github.event_name == 'pull_request' ||
       (github.event_name == 'workflow_dispatch' &&
-       (github.event.inputs.test_type == 'all' || github.event.inputs.test_type == 'web'))
+       (github.event.inputs.test_suite == 'all' ||
+        github.event.inputs.test_suite == 'web'))
 
     steps:
-      - name: Checkout repository
+      - name: 📥 Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Java 11
+      - name: ☕ Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          distribution: temurin
-          java-version: 11
-          cache: gradle
+          java-version: '17'
+          distribution: 'temurin'
 
-      - name: Install Chrome
+      - name: 📦 Cache Gradle dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: 🌍 Install Google Chrome
         run: |
-          sudo apt-get update
+          wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+          echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" | \
+            sudo tee /etc/apt/sources.list.d/google-chrome.list
+          sudo apt-get update -y
           sudo apt-get install -y google-chrome-stable
+          google-chrome --version
 
-      - name: Make gradlew executable
+      - name: 🔑 Make gradlew executable
         run: chmod +x gradlew
 
-      - name: Run Web Tests (Headless)
-        run: ./gradlew webTest --no-daemon
+      - name: 🚀 Run Web UI tests (headless)
+        run: ./gradlew webTest --no-daemon --info
         env:
           WEB_HEADLESS: true
 
-      - name: Upload Web Test Report
-        if: always()
+      - name: 📊 Upload Web test report
         uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: web-test-reports
+          name: web-test-report
           path: build/reports/cucumber/web/
+          retention-days: 7

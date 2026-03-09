@@ -6,71 +6,95 @@ group = 'com.automation'
 version = '1.0-SNAPSHOT'
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_11
-    targetCompatibility = JavaVersion.VERSION_11
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 repositories {
     mavenCentral()
 }
 
+configurations {
+    cucumberRuntime {
+        extendsFrom testImplementation
+    }
+}
+
 dependencies {
+    // Cucumber
     testImplementation 'io.cucumber:cucumber-java:7.14.0'
     testImplementation 'io.cucumber:cucumber-junit-platform-engine:7.14.0'
+
+    // JUnit Platform
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
     testImplementation 'org.junit.platform:junit-platform-suite:1.10.0'
-    testImplementation 'org.junit.vintage:junit-vintage-engine:5.10.0'
+    testImplementation 'org.junit.platform:junit-platform-launcher:1.10.0'
+    testRuntimeOnly  'org.junit.vintage:junit-vintage-engine:5.10.0'
+
+    // Selenium WebDriver
     testImplementation 'org.seleniumhq.selenium:selenium-java:4.15.0'
+
+    // WebDriverManager
     testImplementation 'io.github.bonigarcia:webdrivermanager:5.6.3'
+
+    // RestAssured
     testImplementation 'io.rest-assured:rest-assured:5.3.2'
     testImplementation 'io.rest-assured:json-path:5.3.2'
+
+    // JSON
     testImplementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
     testImplementation 'org.json:json:20230618'
+
+    // Assertions
     testImplementation 'org.assertj:assertj-core:3.24.2'
-    compileOnly 'org.projectlombok:lombok:1.18.30'
-    annotationProcessor 'org.projectlombok:lombok:1.18.30'
-    testCompileOnly 'org.projectlombok:lombok:1.18.30'
-    testAnnotationProcessor 'org.projectlombok:lombok:1.18.30'
 }
 
-task apiTest(type: Test) {
-    description = 'Run all API tests with @api tag'
+// ============================================================
+// TASK: Run semua test dengan tag @api
+// ============================================================
+task apiTest(type: JavaExec) {
+    description = 'Run all Cucumber tests tagged with @api'
     group = 'verification'
+    dependsOn compileTestJava
 
-    useJUnitPlatform {
-        includeTags 'api'
-    }
+    classpath = configurations.cucumberRuntime + sourceSets.test.output + sourceSets.main.output
 
-    systemProperty 'cucumber.filter.tags', '@api'
-    systemProperty 'cucumber.plugin', 'pretty,html:build/reports/cucumber/api/report.html,json:build/reports/cucumber/api/report.json'
-    systemProperty 'cucumber.features', 'src/test/resources/features/api'
-    systemProperty 'cucumber.glue', 'com.automation.api.steps'
+    mainClass = 'io.cucumber.core.cli.Main'
 
-    testLogging {
-        events 'passed', 'skipped', 'failed'
-        showStandardStreams = true
-    }
+    args = [
+        '--plugin', 'pretty',
+        '--plugin', 'html:build/reports/cucumber/api/report.html',
+        '--plugin', 'json:build/reports/cucumber/api/report.json',
+        '--glue', 'com.automation.api.steps',
+        '--tags', '@api',
+        'src/test/resources/features/api'
+    ]
 }
 
-task webTest(type: Test) {
-    description = 'Run all Web UI tests with @web tag'
+// ============================================================
+// TASK: Run semua test dengan tag @web
+// ============================================================
+task webTest(type: JavaExec) {
+    description = 'Run all Cucumber tests tagged with @web'
     group = 'verification'
+    dependsOn compileTestJava
 
-    useJUnitPlatform {
-        includeTags 'web'
-    }
+    classpath = configurations.cucumberRuntime + sourceSets.test.output + sourceSets.main.output
 
-    systemProperty 'cucumber.filter.tags', '@web'
-    systemProperty 'cucumber.plugin', 'pretty,html:build/reports/cucumber/web/report.html,json:build/reports/cucumber/web/report.json'
-    systemProperty 'cucumber.features', 'src/test/resources/features/web'
-    systemProperty 'cucumber.glue', 'com.automation.web.steps'
+    mainClass = 'io.cucumber.core.cli.Main'
 
-    testLogging {
-        events 'passed', 'skipped', 'failed'
-        showStandardStreams = true
-    }
+    args = [
+        '--plugin', 'pretty',
+        '--plugin', 'html:build/reports/cucumber/web/report.html',
+        '--plugin', 'json:build/reports/cucumber/web/report.json',
+        '--glue', 'com.automation.web.steps',
+        '--tags', '@web',
+        'src/test/resources/features/web'
+    ]
 }
 
 test {
     useJUnitPlatform()
+    systemProperty 'cucumber.plugin',
+        'pretty,html:build/reports/cucumber/all/report.html,json:build/reports/cucumber/all/report.json'
 }
