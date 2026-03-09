@@ -10,55 +10,62 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
+import java.util.List;
 
 public abstract class BasePage {
+
     protected WebDriver driver;
     protected WebDriverWait wait;
 
-    public BasePage() {
+    protected BasePage() {
         this.driver = DriverManager.getDriver();
-        this.wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+        this.wait   = new WebDriverWait(driver, Duration.ofSeconds(15));
         PageFactory.initElements(driver, this);
     }
 
-    protected WebElement waitForElementVisible(By locator) {
+    protected WebElement waitForVisible(By locator) {
         return wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
     }
 
-    protected WebElement waitForElementClickable(By locator) {
+    protected WebElement waitForClickable(By locator) {
         return wait.until(ExpectedConditions.elementToBeClickable(locator));
     }
 
-    protected void clickElement(By locator) {
-        waitForElementClickable(locator).click();
+    protected void click(By locator) {
+        waitForClickable(locator).click();
     }
 
-    protected void typeText(By locator, String text) {
-        WebElement element = waitForElementVisible(locator);
-        element.clear();
-        element.sendKeys(text);
+    protected void type(By locator, String text) {
+        WebElement el = waitForVisible(locator);
+        el.clear();
+        el.sendKeys(text);
     }
 
     protected String getText(By locator) {
-        return waitForElementVisible(locator).getText();
+        return waitForVisible(locator).getText().trim();
     }
 
-    protected boolean isElementDisplayed(By locator) {
-        try {
-            return driver.findElement(locator).isDisplayed();
-        } catch (Exception e) {
-            return false;
-        }
+    protected List<WebElement> findAll(By locator) {
+        return driver.findElements(locator);
     }
 
-    protected void scrollToElement(WebElement element) {
-        ((JavascriptExecutor) driver).executeScript(
-                "arguments[0].scrollIntoView(true);", element
-        );
+    protected boolean isDisplayed(By locator) {
+        try { return driver.findElement(locator).isDisplayed(); }
+        catch (Exception e) { return false; }
+    }
+
+    protected void scrollTo(WebElement element) {
+        ((JavascriptExecutor) driver)
+                .executeScript("arguments[0].scrollIntoView({block:'center'});", element);
     }
 
     protected void waitForPageLoad() {
-        wait.until(driver -> ((JavascriptExecutor) driver)
+        wait.until(d -> ((JavascriptExecutor) d)
                 .executeScript("return document.readyState").equals("complete"));
+    }
+
+    protected void pause(long millis) {
+        try { Thread.sleep(millis); }
+        catch (InterruptedException e) { Thread.currentThread().interrupt(); }
     }
 }

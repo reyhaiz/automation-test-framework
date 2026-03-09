@@ -7,47 +7,41 @@ import java.util.List;
 
 public class CartPage extends BasePage {
 
-    private final By cartItems = By.cssSelector("tr.success");
-    private final By totalPrice = By.id("totalp");
-    private final By placeOrderButton = By.xpath("//button[text()='Place Order']");
-    private final By deleteButtons = By.xpath("//a[text()='Delete']");
-    private final By emptyCartMessage = By.xpath("//td[contains(text(),'')]");
+    private final By cartRows      = By.cssSelector("tr.success");
+    private final By totalPriceEl  = By.id("totalp");
+    private final By placeOrderBtn = By.xpath("//button[normalize-space()='Place Order']");
+    private final By deleteLinks   = By.xpath("//a[normalize-space()='Delete']");
 
-    public CartPage() {
-        super();
-    }
-
-    public int getCartItemCount() {
-        return driver.findElements(cartItems).size();
-    }
-
-    public String getTotalPrice() {
-        try {
-            return driver.findElement(totalPrice).getText();
-        } catch (Exception e) {
-            return "0";
-        }
+    public int getItemCount() {
+        pause(1500);
+        return findAll(cartRows).size();
     }
 
     public boolean isCartEmpty() {
-        return driver.findElements(cartItems).isEmpty();
+        return getItemCount() == 0;
+    }
+
+    public String getTotalPrice() {
+        try { return driver.findElement(totalPriceEl).getText().trim(); }
+        catch (Exception e) { return "0"; }
+    }
+
+    public boolean containsProduct(String productName) {
+        for (WebElement row : findAll(cartRows)) {
+            if (row.getText().contains(productName)) return true;
+        }
+        return false;
     }
 
     public void clickPlaceOrder() {
-        waitForElementClickable(placeOrderButton).click();
-    }
-
-    public boolean isProductInCart(String productName) {
-        List<WebElement> items = driver.findElements(
-                By.xpath("//td[contains(text(),'" + productName + "')]")
-        );
-        return !items.isEmpty();
+        click(placeOrderBtn);
     }
 
     public void deleteFirstItem() {
-        List<WebElement> delBtns = driver.findElements(deleteButtons);
+        List<WebElement> delBtns = findAll(deleteLinks);
         if (!delBtns.isEmpty()) {
             delBtns.get(0).click();
+            pause(1000);
         }
     }
 }

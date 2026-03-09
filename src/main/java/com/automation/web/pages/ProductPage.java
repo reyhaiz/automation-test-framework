@@ -6,15 +6,11 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 
 public class ProductPage extends BasePage {
 
-    private final By productName = By.cssSelector(".name");
-    private final By productPrice = By.cssSelector(".price-container");
-    private final By productDescription = By.cssSelector("#more-information p");
-    private final By addToCartButton = By.xpath("//a[text()='Add to cart']");
-    private final By homeLink = By.xpath("//a[text()='Home ']");
-
-    public ProductPage() {
-        super();
-    }
+    private final By productName  = By.cssSelector("h2.name");
+    private final By productPrice = By.cssSelector("h3.price-container");
+    private final By productDesc  = By.cssSelector("div#more-information p");
+    private final By addToCartBtn = By.xpath("//a[normalize-space()='Add to cart']");
+    private final By homeBreadcrumb = By.xpath("//a[normalize-space()='Home ']");
 
     public String getProductName() {
         return getText(productName);
@@ -25,27 +21,32 @@ public class ProductPage extends BasePage {
     }
 
     public String getProductDescription() {
-        return getText(productDescription);
+        try { return getText(productDesc); } catch (Exception e) { return ""; }
+    }
+
+    public boolean isAddToCartButtonVisible() {
+        return isDisplayed(addToCartBtn);
     }
 
     public void clickAddToCart() {
-        waitForElementClickable(addToCartButton).click();
+        click(addToCartBtn);
     }
 
-    public String getAddToCartAlert() {
+    public String addToCartAndConfirm() {
+        clickAddToCart();
         try {
             wait.until(ExpectedConditions.alertIsPresent());
             Alert alert = driver.switchTo().alert();
-            String text = alert.getText();
+            String msg = alert.getText();
             alert.accept();
-            return text;
+            return msg;
         } catch (Exception e) {
             return "";
         }
     }
 
-    public void goToHome() {
-        waitForElementClickable(homeLink).click();
+    public void goHome() {
+        click(homeBreadcrumb);
         waitForPageLoad();
     }
 }
