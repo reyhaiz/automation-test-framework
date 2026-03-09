@@ -1,7 +1,6 @@
 package com.automation.web.driver;
 
 import com.automation.utils.ConfigManager;
-import io.github.bonigarcia.wdm.WebDriverManager;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -9,8 +8,8 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import java.time.Duration;
 
 /**
- * Thread-safe WebDriver manager using ThreadLocal.
- * Supports headless mode via WEB_HEADLESS env variable or config.properties.
+ * Thread-safe WebDriver manager.
+ * Selenium 4.15+ has built-in driver management — no WebDriverManager needed.
  */
 public class DriverManager {
 
@@ -19,8 +18,6 @@ public class DriverManager {
     private DriverManager() {}
 
     public static void initDriver() {
-        WebDriverManager.chromedriver().setup();
-
         ChromeOptions options = new ChromeOptions();
 
         // Support headless via env variable (for CI) or config file
