@@ -43,7 +43,6 @@ public class ApiSteps {
 
     @When("I send a POST request to create a user")
     public void iSendAPostRequestToCreateAUser() {
-        // Use unique email to avoid duplicates
         Map<String, String> userData = new HashMap<>();
         userData.put("firstName", "John");
         userData.put("lastName", "Doe");
@@ -170,12 +169,5 @@ public class ApiSteps {
         this.savedUserId = response.jsonPath().getString("id");
         System.out.println("Saved user ID: " + savedUserId);
         Assertions.assertNotNull(savedUserId, "Created user ID should be saved");
-    }
-
-    @When("I send a POST request to create a user with incomplete data")
-    public void sendPostWithIncompleteData() {
-        Map<String, String> incompleteData = new HashMap<>();
-        incompleteData.put("firstName", "OnlyFirst");
-        response = userApiClient.createUser(incompleteData);
     }
 }
